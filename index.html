@@ -1,503 +1,519 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="theme-color" content="#09090b" />
-  <title>XO Online — playhtml.fun</title>
-  <style>
-    :root {
-      --bg: #09090b;
-      --panel: rgba(24,24,27,.82);
-      --panel-2: rgba(39,39,42,.7);
-      --line: rgba(255,255,255,.10);
-      --text: #f4f4f5;
-      --muted: #a1a1aa;
-      --x: #60a5fa;
-      --o: #fb7185;
-      --good: #34d399;
-      --warn: #fbbf24;
-      --shadow: 0 20px 70px rgba(0,0,0,.35);
-    }
-    * { box-sizing: border-box; }
-    html, body { margin: 0; min-height: 100%; }
-    body {
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background:
-        radial-gradient(circle at 15% 15%, rgba(96,165,250,.13), transparent 28%),
-        radial-gradient(circle at 85% 10%, rgba(244,114,182,.10), transparent 24%),
-        linear-gradient(180deg, #09090b 0%, #111113 100%);
-      color: var(--text);
-    }
-    button, input { font: inherit; }
-    button { cursor: pointer; }
-    .shell { width: min(1120px, calc(100% - 28px)); margin: 0 auto; padding: 28px 0 48px; }
-    .topbar { display:flex; justify-content:space-between; gap:16px; align-items:center; margin-bottom: 18px; }
-    .brand { display:flex; gap:12px; align-items:center; }
-    .logo { width:42px; height:42px; border:1px solid var(--line); border-radius:14px; display:grid; place-items:center; background:var(--panel); box-shadow:var(--shadow); font-weight:800; }
-    .brand h1 { font-size:18px; margin:0; }
-    .brand p { margin:4px 0 0; font-size:12px; color:var(--muted); }
-    .badge { border:1px solid var(--line); background:rgba(39,39,42,.55); border-radius:999px; padding:8px 12px; font-size:12px; color:var(--muted); }
-    .grid { display:grid; grid-template-columns: minmax(0, 1fr) 320px; gap:18px; }
-    .card { background:var(--panel); border:1px solid var(--line); border-radius:24px; box-shadow:var(--shadow); backdrop-filter: blur(16px); }
-    .game-card { padding:22px; }
-    .side-card { padding:20px; }
-    .hero { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; margin-bottom:22px; }
-    .hero h2 { margin:0; font-size:26px; letter-spacing:-.03em; }
-    .hero p { margin:7px 0 0; color:var(--muted); line-height:1.45; font-size:13px; }
-    .status { text-align:right; min-width:170px; }
-    .status .main { font-weight:800; font-size:15px; }
-    .status .sub { margin-top:5px; color:var(--muted); font-size:12px; }
-    .board-wrap { width:min(560px,100%); margin:0 auto; }
-    .board { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
-    .cell {
-      aspect-ratio:1; border-radius:20px; border:1px solid var(--line); background:rgba(39,39,42,.52); color:var(--text);
-      display:grid; place-items:center; font-size:clamp(50px, 9vw, 86px); font-weight:900; letter-spacing:-.06em;
-      transition:transform .15s ease, background .15s ease, border-color .15s ease;
-    }
-    .cell:hover:not(:disabled) { transform:translateY(-2px); background:rgba(63,63,70,.68); }
-    .cell:disabled { cursor:not-allowed; }
-    .cell.x { color:var(--x); text-shadow:0 0 30px rgba(96,165,250,.22); }
-    .cell.o { color:var(--o); text-shadow:0 0 30px rgba(251,113,133,.20); }
-    .cell.win { border-color:rgba(52,211,153,.55); box-shadow:0 0 0 1px rgba(52,211,153,.12), 0 0 28px rgba(52,211,153,.12); background:rgba(6,78,59,.18); }
-    .underboard { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-top:18px; }
-    .btn { border:1px solid var(--line); background:rgba(39,39,42,.78); color:var(--text); border-radius:12px; padding:10px 14px; font-weight:700; }
-    .btn:hover { background:rgba(63,63,70,.82); }
-    .btn.primary { background:#f4f4f5; color:#111113; border-color:#f4f4f5; }
-    .btn.primary:hover { background:#fff; }
-    .btn.danger { color:#fecaca; }
-    .section-title { font-size:12px; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin:0 0 12px; }
-    .players { display:grid; gap:10px; }
-    .player { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:12px; border-radius:14px; background:rgba(39,39,42,.55); border:1px solid var(--line); }
-    .player .who { display:flex; align-items:center; gap:10px; min-width:0; }
-    .dot { width:10px; height:10px; border-radius:999px; background:var(--muted); flex:0 0 auto; }
-    .dot.x { background:var(--x); box-shadow:0 0 14px rgba(96,165,250,.4); }
-    .dot.o { background:var(--o); box-shadow:0 0 14px rgba(251,113,133,.4); }
-    .player strong { display:block; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px; }
-    .player small { display:block; color:var(--muted); margin-top:2px; }
-    .roombox { margin-top:16px; padding:14px; background:rgba(9,9,11,.7); border:1px dashed var(--line); border-radius:16px; }
-    .roomcode { font-size:22px; font-weight:900; letter-spacing:.18em; text-align:center; margin:5px 0 12px; }
-    .row { display:flex; gap:8px; }
-    .row > * { min-width:0; flex:1; }
-    input { width:100%; border:1px solid var(--line); background:rgba(39,39,42,.7); color:var(--text); border-radius:12px; padding:10px 12px; outline:none; }
-    input:focus { border-color:rgba(255,255,255,.25); }
-    .hint { color:var(--muted); font-size:12px; line-height:1.5; margin:10px 0 0; }
-    .log { margin-top:18px; max-height:240px; overflow:auto; display:grid; gap:8px; }
-    .log-item { color:#d4d4d8; font-size:12px; padding:8px 10px; background:rgba(39,39,42,.45); border-radius:10px; }
-    .online { color:var(--good); }
-    .offline { color:#fca5a5; }
-    .hidden { display:none !important; }
-    .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.72); display:grid; place-items:center; padding:20px; z-index:30; }
-    .modal { width:min(430px,100%); padding:22px; background:#18181b; border:1px solid var(--line); border-radius:22px; box-shadow:0 25px 100px rgba(0,0,0,.5); }
-    .modal h3 { margin:0 0 8px; font-size:20px; }
-    .modal p { color:var(--muted); font-size:13px; line-height:1.5; }
-    .modal .actions { display:flex; gap:8px; margin-top:16px; }
-    .toast { position:fixed; left:50%; bottom:22px; transform:translateX(-50%) translateY(20px); opacity:0; pointer-events:none; transition:.2s ease; background:#f4f4f5; color:#111113; padding:10px 14px; border-radius:999px; font-weight:700; font-size:12px; z-index:40; }
-    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-    @media (max-width: 860px) { .grid { grid-template-columns:1fr; } .hero { flex-direction:column; } .status { text-align:left; } .side-card { order:2; } }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oẳn Tù Tì OTTv2 — Búa Kéo Bao 9x9 (nhiều người chơi)</title>
+<style>
+  :root{
+    --bg:#1b1f27; --panel:#242a35; --line:#39404d;
+    --cell-light:#2c333f; --cell-dark:#252b35;
+    --corner:#7a5c1e; --corner-glow:#e0b13a;
+    --red:#e2564c; --red-dim:#5a2b28;
+    --blue:#4c8ee2; --blue-dim:#243a5a;
+    --text:#e8ebf0; --muted:#9aa3b2;
+    --sel:#f2c744;
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; background:var(--bg); color:var(--text);
+    display:flex; flex-direction:column; align-items:center; gap:14px;
+    padding:20px 12px 40px;
+  }
+  h1{font-size:1.25rem; margin:6px 0 0; text-align:center;}
+  .subtitle{color:var(--muted); font-size:.85rem; margin:0; text-align:center; max-width:640px; line-height:1.4;}
+  .panel{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:14px 16px; width:100%; max-width:640px;
+  }
+  .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:center;}
+  .btn{
+    background:#333c4a; color:var(--text); border:1px solid var(--line);
+    border-radius:8px; padding:8px 14px; cursor:pointer; font-size:.9rem;
+  }
+  .btn:hover{background:#3d475a;}
+  .btn.active-red{background:var(--red); border-color:var(--red); color:#2a0d0a;}
+  .btn.active-blue{background:var(--blue); border-color:var(--blue); color:#0a1a2a;}
+  .status{
+    text-align:center; font-size:1rem; font-weight:600; min-height:1.4em;
+  }
+  .status .who-red{color:var(--red);}
+  .status .who-blue{color:var(--blue);}
+  #board-wrap{
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    touch-action: manipulation;
+  }
+  #board{
+    display:grid;
+    grid-template-columns: repeat(9, minmax(30px, 48px));
+    grid-template-rows: repeat(9, minmax(30px, 48px));
+    gap:2px;
+    background:var(--line);
+    border:2px solid var(--line);
+    border-radius:8px;
+    overflow:hidden;
+    user-select:none;
+  }
+  .cell{
+    position:relative;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.4rem;
+    cursor:pointer;
+    background:var(--cell-light);
+  }
+  .cell.dark{background:var(--cell-dark);}
+  .cell.corner{background:var(--corner);}
+  .cell.corner::after{
+    content:"";
+    position:absolute; inset:3px;
+    border:2px dashed var(--corner-glow);
+    border-radius:4px;
+    pointer-events:none;
+  }
+  .cell.selected{outline: 3px solid var(--sel); outline-offset:-3px; z-index:2;}
+  .cell.valid-move::before{
+    content:""; position:absolute; width:34%; height:34%;
+    border-radius:50%; background:rgba(242,199,68,.55);
+  }
+  .cell.valid-capture{outline: 3px solid #ff6b6b; outline-offset:-3px;}
+  .piece{
+    display:flex; align-items:center; justify-content:center;
+    width:82%; height:82%; border-radius:50%;
+    font-size:1.15rem;
+    border:2px solid rgba(0,0,0,.35);
+  }
+  .piece.red{background:var(--red-dim); color:var(--red); border-color:var(--red);}
+  .piece.blue{background:var(--blue-dim); color:var(--blue); border-color:var(--blue);}
+  .coords-col{display:grid; grid-template-columns:repeat(9, minmax(30px,48px)); gap:2px; margin-left:0; font-size:.7rem; color:var(--muted); width:100%; text-align:center;}
+  .legend{display:flex; gap:16px; justify-content:center; flex-wrap:wrap; font-size:.85rem; color:var(--muted);}
+  .legend span{display:flex; align-items:center; gap:6px;}
+  .legend .ex{width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:.9rem; border:2px solid #666;}
+  #conn{font-size:.75rem; color:var(--muted); text-align:center;}
+  #conn.ok{color:#7ad67a;}
+  #conn.err{color:#ff8a8a;}
+  .winner-banner{
+    text-align:center; font-size:1.1rem; font-weight:700; padding:10px;
+    border-radius:10px; margin-top:4px;
+  }
+  .winner-banner.red{background:var(--red-dim); color:var(--red); border:1px solid var(--red);}
+  .winner-banner.blue{background:var(--blue-dim); color:var(--blue); border:1px solid var(--blue);}
+  a{color:#8fb8ff;}
+  code{background:#00000040; padding:1px 5px; border-radius:4px;}
+</style>
 </head>
 <body>
-  <main class="shell">
-    <header class="topbar">
-      <div class="brand">
-        <div class="logo">XO</div>
-        <div><h1>XO Online</h1><p>Multiplayer realtime · powered by playhtml.fun</p></div>
-      </div>
-      <div class="badge"><span id="connectionDot">●</span> <span id="connectionText">Đang kết nối…</span></div>
-    </header>
 
-    <section class="grid">
-      <div class="card game-card">
-        <div class="hero">
-          <div><h2>Phòng <span id="roomTitle">—</span></h2><p id="gameDescription">Chia sẻ mã phòng với một người bạn và chơi ngay.</p></div>
-          <div class="status"><div class="main" id="gameStatus">Đang tải…</div><div class="sub" id="turnStatus">—</div></div>
-        </div>
-        <div class="board-wrap">
-          <div id="board" class="board" aria-label="Bàn cờ XO"></div>
-          <div class="underboard">
-            <button class="btn primary" id="newGameBtn" type="button">Ván mới</button>
-            <button class="btn" id="copyBtn" type="button">Sao chép mã phòng</button>
-            <button class="btn danger" id="leaveBtn" type="button">Đổi phòng</button>
-          </div>
-        </div>
-      </div>
+<h1>🪨✂️🧻 Oẳn Tù Tì — Luật OTTv2 (bàn 9x9)</h1>
+<p class="subtitle">
+  Búa thắng Kéo · Kéo thắng Bao · Bao thắng Búa. Mỗi lượt đi 1 ô theo 8 hướng (như Vua trong cờ vua).
+  Hai quân <b>cùng loại</b> chỉ chặn đường nhau, không ăn được nhau.
+  Thắng khi ăn sạch <b>1 loại quân</b> bất kỳ của đối phương, hoặc đưa quân vào ô góc của đối phương
+  (Đỏ đi tới <b>i9</b>, Xanh đi tới <b>a1</b>).
+</p>
 
-      <aside class="card side-card">
-        <h3 class="section-title">Người chơi</h3>
-        <div id="players" class="players"></div>
+<div class="panel row">
+  <div class="row">
+    <span style="color:var(--muted); font-size:.85rem;">Bạn là:</span>
+    <button class="btn" id="pick-red">🔴 Đỏ</button>
+    <button class="btn" id="pick-blue">🔵 Xanh</button>
+    <button class="btn" id="pick-spec">👁 Chỉ xem</button>
+  </div>
+  <div class="row">
+    <button class="btn" id="new-room">🔗 Phòng mới</button>
+    <button class="btn" id="copy-link">📋 Copy link phòng</button>
+  </div>
+</div>
 
-        <div class="roombox">
-          <div class="section-title">Mã phòng</div>
-          <div id="roomCode" class="roomcode">—</div>
-          <div class="row">
-            <input id="joinInput" maxlength="8" placeholder="Nhập mã phòng" aria-label="Mã phòng muốn tham gia" />
-            <button class="btn" id="joinBtn" type="button">Tham gia</button>
-          </div>
-          <p class="hint">Người thứ ba có thể vào xem trạng thái online nhưng không được đánh. Hai người đầu tiên sẽ nhận X và O.</p>
-        </div>
+<!--
+  ===========================================================================
+  GAME STATE (đồng bộ qua playhtml)
+  board: mảng 81 phần tử, index = r*9+c
+    r = 0..8, r=0 là hàng 9 (trên cùng), r=8 là hàng 1 (dưới cùng)
+    c = 0..8, c=0 là cột a, c=8 là cột i
+  cell = null | { owner: 'red'|'blue', kind: 'bua'|'keo'|'bao' }
+  Góc: a1 => r=8,c=0 (của Xanh phải đi tới để thắng)
+       i9 => r=0,c=8 (của Đỏ phải đi tới để thắng)
+  Bàn cờ + nút "Chơi lại" nằm TRONG phần tử can-play để mọi click
+  (đi quân hoặc reset) đều đi qua đúng luồng đồng bộ dữ liệu.
+  ===========================================================================
+-->
+<div id="ott-game" can-play>
+  <div class="status" id="status">Đang tải...</div>
+  <div id="winner-banner" style="display:none;"></div>
 
-        <div style="margin-top:18px">
-          <h3 class="section-title">Nhật ký</h3>
-          <div id="log" class="log"></div>
-        </div>
-      </aside>
-    </section>
-  </main>
-
-  <div id="nameModal" class="modal-backdrop">
-    <div class="modal">
-      <h3>Nhập tên của bạn</h3>
-      <p>Tên này được dùng để hiển thị với người chơi khác trong phòng.</p>
-      <input id="nameInput" maxlength="24" placeholder="Ví dụ: Bắc" autocomplete="nickname" />
-      <div class="actions"><button class="btn primary" id="nameBtn" type="button">Vào game</button></div>
-    </div>
+  <div id="board-wrap">
+    <div id="board"></div>
   </div>
 
-  <div id="toast" class="toast"></div>
+  <div class="row" style="margin-top:6px;">
+    <button class="btn" id="reset-game">🔁 Chơi lại</button>
+  </div>
+</div>
 
-  <script type="module">
-    import { playhtml } from "https://unpkg.com/playhtml";
+<div class="legend">
+  <span><span class="ex" style="border-color:var(--red); color:var(--red);">✊</span> Búa (Đấm)</span>
+  <span><span class="ex" style="border-color:var(--red); color:var(--red);">✌️</span> Kéo</span>
+  <span><span class="ex" style="border-color:var(--red); color:var(--red);">✋</span> Bao (Lá)</span>
+</div>
 
-    // =========================
-    // CẤU HÌNH
-    // =========================
-    const CUSTOM_HOST = ""; // Ví dụ: "my-game.user.partykit.dev" khi bạn tự host-compatible worker.
-    const ROOM_PREFIX = "xo-";
-    const DEFAULT_ROOM = randomCode();
-    const params = new URLSearchParams(location.search);
-    let roomCode = sanitizeRoom(params.get("room")) || DEFAULT_ROOM;
-    let myName = localStorage.getItem("xo-name") || "";
+<p id="conn">Đang kết nối tới máy chủ playhtml...</p>
 
-    const els = {
-      board: document.querySelector("#board"),
-      roomTitle: document.querySelector("#roomTitle"),
-      roomCode: document.querySelector("#roomCode"),
-      gameStatus: document.querySelector("#gameStatus"),
-      turnStatus: document.querySelector("#turnStatus"),
-      players: document.querySelector("#players"),
-      log: document.querySelector("#log"),
-      nameModal: document.querySelector("#nameModal"),
-      nameInput: document.querySelector("#nameInput"),
-      joinInput: document.querySelector("#joinInput"),
-      toast: document.querySelector("#toast"),
-      connectionText: document.querySelector("#connectionText"),
+<p class="subtitle">
+  Phòng chơi: <code id="room-name">-</code> · gửi link này (đã kèm ?room=...) cho người chơi kia để vào cùng bàn.
+  Trang này cần chạy trên một máy chủ web thật (hoặc mở file trực tiếp) có kết nối Internet ra ngoài —
+  nó KHÔNG chạy được bên trong khung xem trước bị giới hạn mạng.
+</p>
+
+<script>
+(function () {
+  const KINDS = ['bua', 'keo', 'bao'];
+  const KIND_SYMBOL = { bua: '✊', keo: '✌️', bao: '✋' };
+  const KIND_NAME = { bua: 'Búa', keo: 'Kéo', bao: 'Bao' };
+  // beats[a] = kind that 'a' beats
+  const BEATS = { bua: 'keo', keo: 'bao', bao: 'bua' };
+
+  const RED_GOAL = { r: 0, c: 8 };   // i9
+  const BLUE_GOAL = { r: 8, c: 0 };  // a1
+
+  function idx(r, c) { return r * 9 + c; }
+
+  function buildInitialBoard() {
+    const board = new Array(81).fill(null);
+    // Đỏ: hàng 1 (r=8) và hàng 2 (r=7), gần góc a1
+    for (let c = 0; c < 9; c++) {
+      board[idx(8, c)] = { owner: 'red', kind: KINDS[c % 3] };
+      board[idx(7, c)] = { owner: 'red', kind: KINDS[(c + 1) % 3] };
+    }
+    // Xanh: hàng 9 (r=0) và hàng 8 (r=1), gần góc i9
+    for (let c = 0; c < 9; c++) {
+      board[idx(0, c)] = { owner: 'blue', kind: KINDS[c % 3] };
+      board[idx(1, c)] = { owner: 'blue', kind: KINDS[(c + 1) % 3] };
+    }
+    return board;
+  }
+
+  function initialState() {
+    return {
+      board: buildInitialBoard(),
+      turn: 'red',
+      winner: null,      // null | 'red' | 'blue'
+      winReason: null,   // 'capture-all' | 'goal'
+      selected: null,    // {r,c} or null
+      version: 1,
     };
+  }
 
-    let pageData;
-    let unsubscribeGame;
-    let unsubscribeUsers;
-    let myPlayerId = "";
-    let mySymbol = null;
-    let toastTimer;
+  function cellLabel(r, c) {
+    const col = 'abcdefghi'[c];
+    const rank = 9 - r;
+    return col + rank;
+  }
 
-    const emptyState = () => ({
-      board: Array(9).fill(null),
-      turn: "X",
-      status: "waiting", // waiting | playing | won | draw
-      winner: null,
-      winningCells: [],
-      moveCount: 0,
-      version: 0,
-      startedAt: null,
-      updatedAt: Date.now(),
-    });
+  function countKind(board, owner, kind) {
+    let n = 0;
+    for (const cell of board) if (cell && cell.owner === owner && cell.kind === kind) n++;
+    return n;
+  }
 
-    function randomCode() {
-      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-      let out = "";
-      for (let i = 0; i < 5; i++) out += chars[Math.floor(Math.random() * chars.length)];
-      return out;
+  function ownerHasZeroOfAnyKind(board, owner) {
+    for (const k of KINDS) {
+      // only relevant if that owner started with pieces of this kind (always true here)
+      if (countKind(board, owner, k) === 0) return k;
     }
+    return null;
+  }
 
-    function sanitizeRoom(value) {
-      if (!value) return "";
-      return value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
-    }
-
-    function showToast(message) {
-      els.toast.textContent = message;
-      els.toast.classList.add("show");
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => els.toast.classList.remove("show"), 2200);
-    }
-
-    function addLog(message) {
-      const div = document.createElement("div");
-      div.className = "log-item";
-      div.textContent = message;
-      els.log.prepend(div);
-      while (els.log.children.length > 12) els.log.lastElementChild.remove();
-    }
-
-    function getInitials(name) {
-      return (name || "?").trim().slice(0, 2).toUpperCase();
-    }
-
-    function getPlayers() {
-      return playhtml.users.getAll();
-    }
-
-    function getAssignedPlayers() {
-      const users = getPlayers();
-      // User role is persisted via presence channel so refresh/reconnect recomputes from current live users.
-      return users.slice(0, 2);
-    }
-
-    function refreshAssignments() {
-      const users = getAssignedPlayers();
-      const meIndex = users.findIndex(u => u.isMe);
-      myPlayerId = playhtml.users.me.pid || "";
-      mySymbol = meIndex === 0 ? "X" : meIndex === 1 ? "O" : null;
-
-      // Store a human-readable display name in playhtml's shared identity.
-      if (myName && playhtml.users.me.name !== myName) playhtml.users.me.name = myName;
-
-      return users;
-    }
-
-    function renderPlayers() {
-      const users = getPlayers();
-      els.players.replaceChildren();
-      if (!users.length) return;
-      users.forEach((user, index) => {
-        const card = document.createElement("div");
-        card.className = "player";
-        const symbol = index === 0 ? "X" : index === 1 ? "O" : "WATCH";
-        const symClass = symbol === "X" ? "x" : symbol === "O" ? "o" : "";
-        card.innerHTML = `<div class="who"><span class="dot ${symClass}"></span><div><strong>${escapeHtml(user.name || "Người chơi")}</strong><small>${user.isMe ? "Bạn · " : ""}${symbol}</small></div></div><span>${index < 2 ? symbol : "👀"}</span>`;
-        els.players.appendChild(card);
-      });
-      els.connectionText.textContent = `${users.length} người online`;
-    }
-
-    function renderGame(state) {
-      state = normalizeState(state);
-      els.board.replaceChildren();
-      state.board.forEach((value, i) => {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = `cell ${value ? value.toLowerCase() : ""}${state.winningCells.includes(i) ? " win" : ""}`;
-        button.textContent = value || "";
-        button.dataset.index = String(i);
-        const canMove = state.status === "playing" && mySymbol && state.turn === mySymbol && !value;
-        button.disabled = !canMove;
-        button.setAttribute("aria-label", value ? `Ô ${i + 1}: ${value}` : `Ô ${i + 1}: trống`);
-        button.addEventListener("click", () => move(i));
-        els.board.appendChild(button);
-      });
-
-      if (state.status === "waiting") {
-        els.gameStatus.textContent = "Chờ đủ 2 người";
-        els.turnStatus.textContent = mySymbol ? `Bạn là ${mySymbol}` : "Bạn đang xem";
-      } else if (state.status === "playing") {
-        els.gameStatus.textContent = `Lượt ${state.turn}`;
-        els.turnStatus.textContent = mySymbol ? (state.turn === mySymbol ? "Đến lượt bạn" : `Đợi ${state.turn}`) : "Chế độ xem";
-      } else if (state.status === "won") {
-        els.gameStatus.textContent = `${state.winner} thắng!`;
-        els.turnStatus.textContent = mySymbol === state.winner ? "Bạn đã thắng 🎉" : (mySymbol ? "Ván đấu kết thúc" : "Đang xem kết quả");
-      } else if (state.status === "draw") {
-        els.gameStatus.textContent = "Hòa!";
-        els.turnStatus.textContent = "Không còn ô trống";
+  function getValidMoves(board, r, c) {
+    const piece = board[idx(r, c)];
+    if (!piece) return [];
+    const moves = [];
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        if (dr === 0 && dc === 0) continue;
+        const nr = r + dr, nc = c + dc;
+        if (nr < 0 || nr > 8 || nc < 0 || nc > 8) continue;
+        const target = board[idx(nr, nc)];
+        if (!target) {
+          moves.push({ r: nr, c: nc, capture: false });
+        } else if (target.owner === piece.owner) {
+          // cùng phe -> luôn bị chặn, kể cả khác loại
+          continue;
+        } else if (target.kind === piece.kind) {
+          // cùng loại quân -> chặn đường, không ăn được
+          continue;
+        } else if (BEATS[piece.kind] === target.kind) {
+          moves.push({ r: nr, c: nc, capture: true });
+        }
+        // nếu thua loại -> không cho đi (không tự sát)
       }
     }
+    return moves;
+  }
 
-    function normalizeState(state) {
-      const fallback = emptyState();
-      if (!state || !Array.isArray(state.board)) return fallback;
-      return {
-        ...fallback,
-        ...state,
-        board: state.board.slice(0, 9).concat(Array(9).fill(null)).slice(0, 9),
-        winningCells: Array.isArray(state.winningCells) ? state.winningCells : [],
-      };
+  function applyMove(data, fromR, fromC, toR, toC) {
+    const board = data.board.slice();
+    const piece = board[idx(fromR, fromC)];
+    board[idx(fromR, fromC)] = null;
+    board[idx(toR, toC)] = piece;
+
+    let winner = null, winReason = null;
+
+    // điều kiện thắng: tới ô góc của đối phương
+    if (piece.owner === 'red' && toR === RED_GOAL.r && toC === RED_GOAL.c) {
+      winner = 'red'; winReason = 'goal';
+    }
+    if (piece.owner === 'blue' && toR === BLUE_GOAL.r && toC === BLUE_GOAL.c) {
+      winner = 'blue'; winReason = 'goal';
     }
 
-    function evaluate(board) {
-      const lines = [
-        [0,1,2],[3,4,5],[6,7,8],
-        [0,3,6],[1,4,7],[2,5,8],
-        [0,4,8],[2,4,6],
-      ];
-      for (const [a,b,c] of lines) {
-        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-          return { winner: board[a], winningCells: [a,b,c], status: "won" };
+    // điều kiện thắng: ăn sạch 1 loại quân của đối phương
+    if (!winner) {
+      const opponent = piece.owner === 'red' ? 'blue' : 'red';
+      const wipedKind = ownerHasZeroOfAnyKind(board, opponent);
+      if (wipedKind) { winner = piece.owner; winReason = 'capture-all'; }
+    }
+
+    return {
+      ...data,
+      board,
+      turn: winner ? data.turn : (data.turn === 'red' ? 'blue' : 'red'),
+      selected: null,
+      winner,
+      winReason,
+    };
+  }
+
+  // ---------------------------------------------------------------------
+  // Room handling: mỗi phòng là 1 room id riêng cho playhtml, để nhiều
+  // ván chơi song song không đụng nhau.
+  // ---------------------------------------------------------------------
+  function getRoomFromUrl() {
+    const params = new URLSearchParams(location.search);
+    let room = params.get('room');
+    if (!room) {
+      room = 'ottv2-' + Math.random().toString(36).slice(2, 8);
+      params.set('room', room);
+      history.replaceState(null, '', location.pathname + '?' + params.toString());
+    }
+    return room;
+  }
+  const ROOM = getRoomFromUrl();
+  document.getElementById('room-name').textContent = ROOM;
+
+  // ---------------------------------------------------------------------
+  // Vai trò người chơi (lưu local, không đồng bộ — chỉ để UI biết
+  // ai đang bấm là phe nào)
+  // ---------------------------------------------------------------------
+  let myRole = localStorage.getItem('ottv2-role-' + ROOM) || null;
+
+  function setRole(role) {
+    myRole = role;
+    if (role) localStorage.setItem('ottv2-role-' + ROOM, role);
+    else localStorage.removeItem('ottv2-role-' + ROOM);
+    updateRoleButtons();
+  }
+
+  function updateRoleButtons() {
+    document.getElementById('pick-red').classList.toggle('active-red', myRole === 'red');
+    document.getElementById('pick-blue').classList.toggle('active-blue', myRole === 'blue');
+  }
+
+  document.getElementById('pick-red').onclick = () => setRole('red');
+  document.getElementById('pick-blue').onclick = () => setRole('blue');
+  document.getElementById('pick-spec').onclick = () => setRole(null);
+  document.getElementById('new-room').onclick = () => {
+    const params = new URLSearchParams(location.search);
+    params.set('room', 'ottv2-' + Math.random().toString(36).slice(2, 8));
+    location.search = params.toString();
+  };
+  document.getElementById('copy-link').onclick = () => {
+    navigator.clipboard?.writeText(location.href).then(() => {
+      const c = document.getElementById('conn');
+      const old = c.textContent;
+      c.textContent = 'Đã copy link phòng!';
+      setTimeout(() => (c.textContent = old), 1500);
+    });
+  };
+
+  updateRoleButtons();
+
+  // ---------------------------------------------------------------------
+  // Xây DOM bàn cờ 1 lần
+  // ---------------------------------------------------------------------
+  const boardEl = document.getElementById('board');
+  const cellEls = [];
+  for (let r = 0; r < 9; r++) {
+    for (let c = 0; c < 9; c++) {
+      const div = document.createElement('div');
+      div.className = 'cell' + ((r + c) % 2 ? ' dark' : '');
+      if ((r === RED_GOAL.r && c === RED_GOAL.c) || (r === BLUE_GOAL.r && c === BLUE_GOAL.c)) {
+        div.classList.add('corner');
+        div.title = cellLabel(r, c) + ' (ô thắng)';
+      } else {
+        div.title = cellLabel(r, c);
+      }
+      div.dataset.r = r;
+      div.dataset.c = c;
+      boardEl.appendChild(div);
+      cellEls.push(div);
+    }
+  }
+
+  const statusEl = document.getElementById('status');
+  const bannerEl = document.getElementById('winner-banner');
+
+  function render(data) {
+    // trạng thái / lượt đi
+    if (data.winner) {
+      const name = data.winner === 'red' ? 'Đỏ' : 'Xanh';
+      const reason = data.winReason === 'goal'
+        ? 'đã đưa quân vào ô góc chiến thắng!'
+        : 'đã ăn sạch một loại quân của đối phương!';
+      statusEl.innerHTML = `🏆 <span class="who-${data.winner}">${name}</span> thắng — ${reason}`;
+      bannerEl.style.display = 'block';
+      bannerEl.className = 'winner-banner ' + data.winner;
+      bannerEl.textContent = `${name.toUpperCase()} CHIẾN THẮNG`;
+    } else {
+      const name = data.turn === 'red' ? 'Đỏ' : 'Xanh';
+      let extra = '';
+      if (myRole && myRole !== data.turn) extra = ' (đợi đối thủ đi)';
+      else if (myRole === data.turn) extra = ' — tới lượt bạn';
+      statusEl.innerHTML = `Lượt của <span class="who-${data.turn}">${name}</span>${extra}`;
+      bannerEl.style.display = 'none';
+    }
+
+    const sel = data.selected;
+    const validMoves = sel ? getValidMoves(data.board, sel.r, sel.c) : [];
+    const validMap = new Map(validMoves.map(m => [idx(m.r, m.c), m.capture]));
+
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        const el = cellEls[idx(r, c)];
+        const piece = data.board[idx(r, c)];
+        el.innerHTML = '';
+        el.classList.remove('selected', 'valid-move', 'valid-capture');
+
+        if (piece) {
+          const span = document.createElement('span');
+          span.className = 'piece ' + piece.owner;
+          span.textContent = KIND_SYMBOL[piece.kind];
+          span.title = (piece.owner === 'red' ? 'Đỏ' : 'Xanh') + ' - ' + KIND_NAME[piece.kind];
+          el.appendChild(span);
+        }
+        if (sel && sel.r === r && sel.c === c) el.classList.add('selected');
+        if (validMap.has(idx(r, c))) {
+          el.classList.add(validMap.get(idx(r, c)) ? 'valid-capture' : 'valid-move');
         }
       }
-      if (board.every(Boolean)) return { winner: null, winningCells: [], status: "draw" };
-      return { winner: null, winningCells: [], status: "playing" };
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Gắn logic can-play TRƯỚC khi playhtml được import (bắt buộc theo docs)
+  // ---------------------------------------------------------------------
+  const gameEl = document.getElementById('ott-game');
+  gameEl.defaultData = initialState();
+
+  gameEl.updateElement = ({ data }) => {
+    render(data);
+  };
+
+  gameEl.onClick = (e, { data, setData }) => {
+    // nút "Chơi lại" nằm trong cùng phần tử can-play để đi qua đúng
+    // luồng đồng bộ dữ liệu (reset cho tất cả người chơi trong phòng)
+    if (e.target.closest('#reset-game')) {
+      setData(initialState());
+      return;
     }
 
-    function move(index) {
-      const users = refreshAssignments();
-      if (!mySymbol || users.length < 2) return showToast("Cần 2 người chơi để bắt đầu.");
-      const state = normalizeState(pageData.getData());
-      if (state.status !== "playing") return;
-      if (state.turn !== mySymbol) return showToast("Chưa đến lượt bạn.");
-      if (state.board[index]) return;
+    if (data.winner) return; // ván đã kết thúc
+    const cellDiv = e.target.closest('.cell');
+    if (!cellDiv) return;
+    const r = parseInt(cellDiv.dataset.r, 10);
+    const c = parseInt(cellDiv.dataset.c, 10);
 
-      pageData.setData((draft) => {
-        // Re-check inside the shared-state mutation against the latest draft.
-        if (draft.status !== "playing" || draft.turn !== mySymbol || draft.board[index]) return;
-        draft.board[index] = mySymbol;
-        draft.moveCount += 1;
-        const result = evaluate(draft.board);
-        draft.status = result.status;
-        draft.winner = result.winner;
-        draft.winningCells = result.winningCells;
-        draft.turn = result.status === "playing" ? (mySymbol === "X" ? "O" : "X") : draft.turn;
-        draft.version += 1;
-        draft.updatedAt = Date.now();
-      });
+    // chỉ cho thao tác nếu đang đúng lượt của vai trò mình chọn
+    if (myRole && myRole !== data.turn) return;
+    if (!myRole) return; // khán giả không được đi quân
 
-      playhtml.dispatchPlayEvent({ type: "xo-move", eventPayload: { symbol: mySymbol, index } });
+    const clicked = data.board[idx(r, c)];
+    const sel = data.selected;
+
+    if (sel) {
+      if (sel.r === r && sel.c === c) {
+        // bấm lại quân đang chọn -> bỏ chọn
+        setData({ ...data, selected: null });
+        return;
+      }
+      const moves = getValidMoves(data.board, sel.r, sel.c);
+      const isValid = moves.some(m => m.r === r && m.c === c);
+      if (isValid) {
+        setData(applyMove(data, sel.r, sel.c, r, c));
+        return;
+      }
+      // bấm sang 1 quân khác của mình -> đổi lựa chọn
+      if (clicked && clicked.owner === myRole) {
+        setData({ ...data, selected: { r, c } });
+        return;
+      }
+      // bấm ô không hợp lệ -> bỏ chọn
+      setData({ ...data, selected: null });
+      return;
     }
 
-    function startNewGame() {
-      const users = getPlayers();
-      if (users.length < 2) return showToast("Cần đủ 2 người để bắt đầu ván mới.");
-      if (!mySymbol) return showToast("Bạn đang ở chế độ xem.");
-      pageData.setData(() => ({
-        ...emptyState(),
-        status: "playing",
-        startedAt: Date.now(),
-        updatedAt: Date.now(),
-      }));
-      playhtml.dispatchPlayEvent({ type: "xo-new-game", eventPayload: { by: mySymbol } });
+    // chưa chọn quân nào
+    if (clicked && clicked.owner === myRole) {
+      setData({ ...data, selected: { r, c } });
     }
+  };
 
-    function handleNewVisitor() {
-      // The first shared page-data update creates the game state.
-      pageData.onUpdate(renderGame);
-    }
+  // ---------------------------------------------------------------------
+  // Import playhtml. Ưu tiên jsDelivr, dự phòng unpkg (chạy khi tự host,
+  // KHÔNG chạy được trong khung artifact bị giới hạn mạng của Claude).
+  // ---------------------------------------------------------------------
+  const connEl = document.getElementById('conn');
 
-    async function init() {
-      els.roomTitle.textContent = roomCode;
-      els.roomCode.textContent = roomCode;
-      document.title = `XO Online · ${roomCode}`;
-
-      const initOptions = {
-        room: `${ROOM_PREFIX}${roomCode}`,
-        ...(CUSTOM_HOST ? { host: CUSTOM_HOST } : {}),
-        events: {
-          "xo-move": {
-            type: "xo-move",
-            onEvent: ({ symbol }) => {
-              if (symbol) showToast(`${symbol} vừa đánh một nước.`);
-            },
-          },
-          "xo-new-game": {
-            type: "xo-new-game",
-            onEvent: () => addLog("Một ván mới đã bắt đầu.")
-          },
-        },
-      };
-
+  async function loadPlayhtml() {
+    const sources = [
+      'https://cdn.jsdelivr.net/npm/playhtml@latest/+esm',
+      'https://unpkg.com/playhtml@latest',
+    ];
+    let lastErr = null;
+    for (const src of sources) {
       try {
-        await playhtml.init(initOptions);
-        await playhtml.ready;
-        els.connectionText.textContent = "Đã kết nối";
-        document.querySelector("#connectionDot").className = "online";
-
-        if (!myName) {
-          els.nameModal.classList.remove("hidden");
-          els.nameInput.focus();
-          return;
-        }
-        enterGame();
-      } catch (error) {
-        console.error(error);
-        els.connectionText.textContent = "Lỗi kết nối";
-        els.connectionText.className = "offline";
-        showToast("Không thể kết nối playhtml.");
+        const mod = await import(/* webpackIgnore: true */ src);
+        return mod.playhtml || mod.default;
+      } catch (err) {
+        lastErr = err;
       }
     }
+    throw lastErr;
+  }
 
-    function enterGame() {
-      myName = els.nameInput.value.trim() || myName || `Player-${randomCode().slice(0,3)}`;
-      localStorage.setItem("xo-name", myName);
-      playhtml.users.me.name = myName;
-      els.nameModal.classList.add("hidden");
+  loadPlayhtml().then((playhtml) => {
+    playhtml.init({ room: ROOM });
+    connEl.textContent = '✅ Đã kết nối phòng "' + ROOM + '" — mọi nước đi sẽ đồng bộ realtime.';
+    connEl.className = 'ok';
+  }).catch((err) => {
+    connEl.textContent =
+      '⚠️ Không kết nối được máy chủ playhtml (thường do trang đang chạy trong môi trường ' +
+      'chặn mạng ra ngoài, ví dụ khung xem trước của Claude). Hãy tải file này về và mở nó ' +
+      'từ một máy chủ web thật (hoặc mở trực tiếp bằng trình duyệt) để chơi nhiều người. ' +
+      'Bàn cờ dưới đây vẫn hoạt động ở chế độ 1 máy (không đồng bộ).';
+    connEl.className = 'err';
+    console.error(err);
+    // Chế độ dự phòng: chạy local không đồng bộ, để vẫn xem/luyện được luật.
+    let localData = gameEl.defaultData;
+    const fakeSetData = (newData) => { localData = newData; render(localData); };
+    gameEl.addEventListener('click', (e) => gameEl.onClick(e, { data: localData, setData: fakeSetData }));
+    render(localData);
+  });
 
-      pageData = playhtml.createPageData("xo-game-state", emptyState());
-      let lastVersion = -1;
-      unsubscribeGame = pageData.onUpdate((incoming) => {
-        const state = normalizeState(incoming);
-        renderGame(state);
-        if (state.version !== lastVersion) {
-          if (state.status === "won") addLog(`${state.winner} thắng ván này.`);
-          else if (state.status === "draw") addLog("Ván đấu kết thúc với kết quả hòa.");
-          lastVersion = state.version;
-        }
-      });
+  // render lần đầu (trước khi playhtml/network load xong) để không bị trắng trang
+  render(gameEl.defaultData);
+})();
+</script>
 
-      unsubscribeUsers = playhtml.users.onChange(() => {
-        refreshAssignments();
-        renderPlayers();
-        const current = normalizeState(pageData.getData());
-        const count = getPlayers().length;
-        if (count >= 2 && current.status === "waiting") {
-          pageData.setData((draft) => {
-            if (draft.status === "waiting") {
-              draft.status = "playing";
-              draft.startedAt = Date.now();
-              draft.updatedAt = Date.now();
-            }
-          });
-          addLog("Đủ 2 người — bắt đầu ván.");
-        }
-        if (count < 2 && current.status === "playing") {
-          pageData.setData((draft) => {
-            draft.status = "waiting";
-            draft.winner = null;
-            draft.winningCells = [];
-            draft.turn = "X";
-            draft.updatedAt = Date.now();
-          });
-          addLog("Một người đã rời phòng — chờ người chơi mới.");
-        }
-      });
-
-      // Seed default state only when channel still has no meaningful data.
-      const current = normalizeState(pageData.getData());
-      if (!current.updatedAt) pageData.setData(emptyState());
-      refreshAssignments();
-      renderPlayers();
-      renderGame(current);
-      addLog(`Đã vào phòng ${roomCode}.`);
-    }
-
-    function goToRoom(code) {
-      const clean = sanitizeRoom(code);
-      if (!clean) return showToast("Mã phòng không hợp lệ.");
-      location.href = `${location.pathname}?room=${encodeURIComponent(clean)}`;
-    }
-
-    function copyRoom() {
-      navigator.clipboard?.writeText(`${location.origin}${location.pathname}?room=${roomCode}`)
-        .then(() => showToast("Đã sao chép link phòng."))
-        .catch(() => showToast(`Mã phòng: ${roomCode}`));
-    }
-
-    function escapeHtml(value) {
-      return String(value).replace(/[&<>'"]/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;","\"":"&quot;"}[ch]));
-    }
-
-    document.querySelector("#nameBtn").addEventListener("click", enterGame);
-    els.nameInput.addEventListener("keydown", e => { if (e.key === "Enter") enterGame(); });
-    document.querySelector("#newGameBtn").addEventListener("click", startNewGame);
-    document.querySelector("#copyBtn").addEventListener("click", copyRoom);
-    document.querySelector("#leaveBtn").addEventListener("click", () => goToRoom(randomCode()));
-    document.querySelector("#joinBtn").addEventListener("click", () => goToRoom(els.joinInput.value));
-    els.joinInput.addEventListener("keydown", e => { if (e.key === "Enter") goToRoom(els.joinInput.value); });
-
-    window.addEventListener("beforeunload", () => {
-      unsubscribeGame?.();
-      unsubscribeUsers?.();
-      pageData?.destroy?.();
-    });
-
-    init();
-  </script>
 </body>
 </html>
