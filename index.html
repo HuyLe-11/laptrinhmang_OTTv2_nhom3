@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#09090b" />
+  <title>XO Online — playhtml.fun</title>
+  <style>
+    :root {
+      --bg: #09090b;
+      --panel: rgba(24,24,27,.82);
+      --panel-2: rgba(39,39,42,.7);
+      --line: rgba(255,255,255,.10);
+      --text: #f4f4f5;
+      --muted: #a1a1aa;
+      --x: #60a5fa;
+      --o: #fb7185;
+      --good: #34d399;
+      --warn: #fbbf24;
+      --shadow: 0 20px 70px rgba(0,0,0,.35);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 15% 15%, rgba(96,165,250,.13), transparent 28%),
+        radial-gradient(circle at 85% 10%, rgba(244,114,182,.10), transparent 24%),
+        linear-gradient(180deg, #09090b 0%, #111113 100%);
+      color: var(--text);
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    .shell { width: min(1120px, calc(100% - 28px)); margin: 0 auto; padding: 28px 0 48px; }
+    .topbar { display:flex; justify-content:space-between; gap:16px; align-items:center; margin-bottom: 18px; }
+    .brand { display:flex; gap:12px; align-items:center; }
+    .logo { width:42px; height:42px; border:1px solid var(--line); border-radius:14px; display:grid; place-items:center; background:var(--panel); box-shadow:var(--shadow); font-weight:800; }
+    .brand h1 { font-size:18px; margin:0; }
+    .brand p { margin:4px 0 0; font-size:12px; color:var(--muted); }
+    .badge { border:1px solid var(--line); background:rgba(39,39,42,.55); border-radius:999px; padding:8px 12px; font-size:12px; color:var(--muted); }
+    .grid { display:grid; grid-template-columns: minmax(0, 1fr) 320px; gap:18px; }
+    .card { background:var(--panel); border:1px solid var(--line); border-radius:24px; box-shadow:var(--shadow); backdrop-filter: blur(16px); }
+    .game-card { padding:22px; }
+    .side-card { padding:20px; }
+    .hero { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; margin-bottom:22px; }
+    .hero h2 { margin:0; font-size:26px; letter-spacing:-.03em; }
+    .hero p { margin:7px 0 0; color:var(--muted); line-height:1.45; font-size:13px; }
+    .status { text-align:right; min-width:170px; }
+    .status .main { font-weight:800; font-size:15px; }
+    .status .sub { margin-top:5px; color:var(--muted); font-size:12px; }
+    .board-wrap { width:min(560px,100%); margin:0 auto; }
+    .board { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+    .cell {
+      aspect-ratio:1; border-radius:20px; border:1px solid var(--line); background:rgba(39,39,42,.52); color:var(--text);
+      display:grid; place-items:center; font-size:clamp(50px, 9vw, 86px); font-weight:900; letter-spacing:-.06em;
+      transition:transform .15s ease, background .15s ease, border-color .15s ease;
+    }
+    .cell:hover:not(:disabled) { transform:translateY(-2px); background:rgba(63,63,70,.68); }
+    .cell:disabled { cursor:not-allowed; }
+    .cell.x { color:var(--x); text-shadow:0 0 30px rgba(96,165,250,.22); }
+    .cell.o { color:var(--o); text-shadow:0 0 30px rgba(251,113,133,.20); }
+    .cell.win { border-color:rgba(52,211,153,.55); box-shadow:0 0 0 1px rgba(52,211,153,.12), 0 0 28px rgba(52,211,153,.12); background:rgba(6,78,59,.18); }
+    .underboard { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-top:18px; }
+    .btn { border:1px solid var(--line); background:rgba(39,39,42,.78); color:var(--text); border-radius:12px; padding:10px 14px; font-weight:700; }
+    .btn:hover { background:rgba(63,63,70,.82); }
+    .btn.primary { background:#f4f4f5; color:#111113; border-color:#f4f4f5; }
+    .btn.primary:hover { background:#fff; }
+    .btn.danger { color:#fecaca; }
+    .section-title { font-size:12px; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin:0 0 12px; }
+    .players { display:grid; gap:10px; }
+    .player { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:12px; border-radius:14px; background:rgba(39,39,42,.55); border:1px solid var(--line); }
+    .player .who { display:flex; align-items:center; gap:10px; min-width:0; }
+    .dot { width:10px; height:10px; border-radius:999px; background:var(--muted); flex:0 0 auto; }
+    .dot.x { background:var(--x); box-shadow:0 0 14px rgba(96,165,250,.4); }
+    .dot.o { background:var(--o); box-shadow:0 0 14px rgba(251,113,133,.4); }
+    .player strong { display:block; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px; }
+    .player small { display:block; color:var(--muted); margin-top:2px; }
+    .roombox { margin-top:16px; padding:14px; background:rgba(9,9,11,.7); border:1px dashed var(--line); border-radius:16px; }
+    .roomcode { font-size:22px; font-weight:900; letter-spacing:.18em; text-align:center; margin:5px 0 12px; }
+    .row { display:flex; gap:8px; }
+    .row > * { min-width:0; flex:1; }
+    input { width:100%; border:1px solid var(--line); background:rgba(39,39,42,.7); color:var(--text); border-radius:12px; padding:10px 12px; outline:none; }
+    input:focus { border-color:rgba(255,255,255,.25); }
+    .hint { color:var(--muted); font-size:12px; line-height:1.5; margin:10px 0 0; }
+    .log { margin-top:18px; max-height:240px; overflow:auto; display:grid; gap:8px; }
+    .log-item { color:#d4d4d8; font-size:12px; padding:8px 10px; background:rgba(39,39,42,.45); border-radius:10px; }
+    .online { color:var(--good); }
+    .offline { color:#fca5a5; }
+    .hidden { display:none !important; }
+    .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.72); display:grid; place-items:center; padding:20px; z-index:30; }
+    .modal { width:min(430px,100%); padding:22px; background:#18181b; border:1px solid var(--line); border-radius:22px; box-shadow:0 25px 100px rgba(0,0,0,.5); }
+    .modal h3 { margin:0 0 8px; font-size:20px; }
+    .modal p { color:var(--muted); font-size:13px; line-height:1.5; }
+    .modal .actions { display:flex; gap:8px; margin-top:16px; }
+    .toast { position:fixed; left:50%; bottom:22px; transform:translateX(-50%) translateY(20px); opacity:0; pointer-events:none; transition:.2s ease; background:#f4f4f5; color:#111113; padding:10px 14px; border-radius:999px; font-weight:700; font-size:12px; z-index:40; }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    @media (max-width: 860px) { .grid { grid-template-columns:1fr; } .hero { flex-direction:column; } .status { text-align:left; } .side-card { order:2; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">XO</div>
+        <div><h1>XO Online</h1><p>Multiplayer realtime · powered by playhtml.fun</p></div>
+      </div>
+      <div class="badge"><span id="connectionDot">●</span> <span id="connectionText">Đang kết nối…</span></div>
+    </header>
+
+    <section class="grid">
+      <div class="card game-card">
+        <div class="hero">
+          <div><h2>Phòng <span id="roomTitle">—</span></h2><p id="gameDescription">Chia sẻ mã phòng với một người bạn và chơi ngay.</p></div>
+          <div class="status"><div class="main" id="gameStatus">Đang tải…</div><div class="sub" id="turnStatus">—</div></div>
+        </div>
+        <div class="board-wrap">
+          <div id="board" class="board" aria-label="Bàn cờ XO"></div>
+          <div class="underboard">
+            <button class="btn primary" id="newGameBtn" type="button">Ván mới</button>
+            <button class="btn" id="copyBtn" type="button">Sao chép mã phòng</button>
+            <button class="btn danger" id="leaveBtn" type="button">Đổi phòng</button>
+          </div>
+        </div>
+      </div>
+
+      <aside class="card side-card">
+        <h3 class="section-title">Người chơi</h3>
+        <div id="players" class="players"></div>
+
+        <div class="roombox">
+          <div class="section-title">Mã phòng</div>
+          <div id="roomCode" class="roomcode">—</div>
+          <div class="row">
+            <input id="joinInput" maxlength="8" placeholder="Nhập mã phòng" aria-label="Mã phòng muốn tham gia" />
+            <button class="btn" id="joinBtn" type="button">Tham gia</button>
+          </div>
+          <p class="hint">Người thứ ba có thể vào xem trạng thái online nhưng không được đánh. Hai người đầu tiên sẽ nhận X và O.</p>
+        </div>
+
+        <div style="margin-top:18px">
+          <h3 class="section-title">Nhật ký</h3>
+          <div id="log" class="log"></div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <div id="nameModal" class="modal-backdrop">
+    <div class="modal">
+      <h3>Nhập tên của bạn</h3>
+      <p>Tên này được dùng để hiển thị với người chơi khác trong phòng.</p>
+      <input id="nameInput" maxlength="24" placeholder="Ví dụ: Bắc" autocomplete="nickname" />
+      <div class="actions"><button class="btn primary" id="nameBtn" type="button">Vào game</button></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script type="module">
+    import { playhtml } from "https://unpkg.com/playhtml";
+
+    // =========================
+    // CẤU HÌNH
+    // =========================
+    const CUSTOM_HOST = ""; // Ví dụ: "my-game.user.partykit.dev" khi bạn tự host-compatible worker.
+    const ROOM_PREFIX = "xo-";
+    const DEFAULT_ROOM = randomCode();
+    const params = new URLSearchParams(location.search);
+    let roomCode = sanitizeRoom(params.get("room")) || DEFAULT_ROOM;
+    let myName = localStorage.getItem("xo-name") || "";
+
+    const els = {
+      board: document.querySelector("#board"),
+      roomTitle: document.querySelector("#roomTitle"),
+      roomCode: document.querySelector("#roomCode"),
+      gameStatus: document.querySelector("#gameStatus"),
+      turnStatus: document.querySelector("#turnStatus"),
+      players: document.querySelector("#players"),
+      log: document.querySelector("#log"),
+      nameModal: document.querySelector("#nameModal"),
+      nameInput: document.querySelector("#nameInput"),
+      joinInput: document.querySelector("#joinInput"),
+      toast: document.querySelector("#toast"),
+      connectionText: document.querySelector("#connectionText"),
+    };
+
+    let pageData;
+    let unsubscribeGame;
+    let unsubscribeUsers;
+    let myPlayerId = "";
+    let mySymbol = null;
+    let toastTimer;
+
+    const emptyState = () => ({
+      board: Array(9).fill(null),
+      turn: "X",
+      status: "waiting", // waiting | playing | won | draw
+      winner: null,
+      winningCells: [],
+      moveCount: 0,
+      version: 0,
+      startedAt: null,
+      updatedAt: Date.now(),
+    });
+
+    function randomCode() {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      let out = "";
+      for (let i = 0; i < 5; i++) out += chars[Math.floor(Math.random() * chars.length)];
+      return out;
+    }
+
+    function sanitizeRoom(value) {
+      if (!value) return "";
+      return value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
+    }
+
+    function showToast(message) {
+      els.toast.textContent = message;
+      els.toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => els.toast.classList.remove("show"), 2200);
+    }
+
+    function addLog(message) {
+      const div = document.createElement("div");
+      div.className = "log-item";
+      div.textContent = message;
+      els.log.prepend(div);
+      while (els.log.children.length > 12) els.log.lastElementChild.remove();
+    }
+
+    function getInitials(name) {
+      return (name || "?").trim().slice(0, 2).toUpperCase();
+    }
+
+    function getPlayers() {
+      return playhtml.users.getAll();
+    }
+
+    function getAssignedPlayers() {
+      const users = getPlayers();
+      // User role is persisted via presence channel so refresh/reconnect recomputes from current live users.
+      return users.slice(0, 2);
+    }
+
+    function refreshAssignments() {
+      const users = getAssignedPlayers();
+      const meIndex = users.findIndex(u => u.isMe);
+      myPlayerId = playhtml.users.me.pid || "";
+      mySymbol = meIndex === 0 ? "X" : meIndex === 1 ? "O" : null;
+
+      // Store a human-readable display name in playhtml's shared identity.
+      if (myName && playhtml.users.me.name !== myName) playhtml.users.me.name = myName;
+
+      return users;
+    }
+
+    function renderPlayers() {
+      const users = getPlayers();
+      els.players.replaceChildren();
+      if (!users.length) return;
+      users.forEach((user, index) => {
+        const card = document.createElement("div");
+        card.className = "player";
+        const symbol = index === 0 ? "X" : index === 1 ? "O" : "WATCH";
+        const symClass = symbol === "X" ? "x" : symbol === "O" ? "o" : "";
+        card.innerHTML = `<div class="who"><span class="dot ${symClass}"></span><div><strong>${escapeHtml(user.name || "Người chơi")}</strong><small>${user.isMe ? "Bạn · " : ""}${symbol}</small></div></div><span>${index < 2 ? symbol : "👀"}</span>`;
+        els.players.appendChild(card);
+      });
+      els.connectionText.textContent = `${users.length} người online`;
+    }
+
+    function renderGame(state) {
+      state = normalizeState(state);
+      els.board.replaceChildren();
+      state.board.forEach((value, i) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `cell ${value ? value.toLowerCase() : ""}${state.winningCells.includes(i) ? " win" : ""}`;
+        button.textContent = value || "";
+        button.dataset.index = String(i);
+        const canMove = state.status === "playing" && mySymbol && state.turn === mySymbol && !value;
+        button.disabled = !canMove;
+        button.setAttribute("aria-label", value ? `Ô ${i + 1}: ${value}` : `Ô ${i + 1}: trống`);
+        button.addEventListener("click", () => move(i));
+        els.board.appendChild(button);
+      });
+
+      if (state.status === "waiting") {
+        els.gameStatus.textContent = "Chờ đủ 2 người";
+        els.turnStatus.textContent = mySymbol ? `Bạn là ${mySymbol}` : "Bạn đang xem";
+      } else if (state.status === "playing") {
+        els.gameStatus.textContent = `Lượt ${state.turn}`;
+        els.turnStatus.textContent = mySymbol ? (state.turn === mySymbol ? "Đến lượt bạn" : `Đợi ${state.turn}`) : "Chế độ xem";
+      } else if (state.status === "won") {
+        els.gameStatus.textContent = `${state.winner} thắng!`;
+        els.turnStatus.textContent = mySymbol === state.winner ? "Bạn đã thắng 🎉" : (mySymbol ? "Ván đấu kết thúc" : "Đang xem kết quả");
+      } else if (state.status === "draw") {
+        els.gameStatus.textContent = "Hòa!";
+        els.turnStatus.textContent = "Không còn ô trống";
+      }
+    }
+
+    function normalizeState(state) {
+      const fallback = emptyState();
+      if (!state || !Array.isArray(state.board)) return fallback;
+      return {
+        ...fallback,
+        ...state,
+        board: state.board.slice(0, 9).concat(Array(9).fill(null)).slice(0, 9),
+        winningCells: Array.isArray(state.winningCells) ? state.winningCells : [],
+      };
+    }
+
+    function evaluate(board) {
+      const lines = [
+        [0,1,2],[3,4,5],[6,7,8],
+        [0,3,6],[1,4,7],[2,5,8],
+        [0,4,8],[2,4,6],
+      ];
+      for (const [a,b,c] of lines) {
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+          return { winner: board[a], winningCells: [a,b,c], status: "won" };
+        }
+      }
+      if (board.every(Boolean)) return { winner: null, winningCells: [], status: "draw" };
+      return { winner: null, winningCells: [], status: "playing" };
+    }
+
+    function move(index) {
+      const users = refreshAssignments();
+      if (!mySymbol || users.length < 2) return showToast("Cần 2 người chơi để bắt đầu.");
+      const state = normalizeState(pageData.getData());
+      if (state.status !== "playing") return;
+      if (state.turn !== mySymbol) return showToast("Chưa đến lượt bạn.");
+      if (state.board[index]) return;
+
+      pageData.setData((draft) => {
+        // Re-check inside the shared-state mutation against the latest draft.
+        if (draft.status !== "playing" || draft.turn !== mySymbol || draft.board[index]) return;
+        draft.board[index] = mySymbol;
+        draft.moveCount += 1;
+        const result = evaluate(draft.board);
+        draft.status = result.status;
+        draft.winner = result.winner;
+        draft.winningCells = result.winningCells;
+        draft.turn = result.status === "playing" ? (mySymbol === "X" ? "O" : "X") : draft.turn;
+        draft.version += 1;
+        draft.updatedAt = Date.now();
+      });
+
+      playhtml.dispatchPlayEvent({ type: "xo-move", eventPayload: { symbol: mySymbol, index } });
+    }
+
+    function startNewGame() {
+      const users = getPlayers();
+      if (users.length < 2) return showToast("Cần đủ 2 người để bắt đầu ván mới.");
+      if (!mySymbol) return showToast("Bạn đang ở chế độ xem.");
+      pageData.setData(() => ({
+        ...emptyState(),
+        status: "playing",
+        startedAt: Date.now(),
+        updatedAt: Date.now(),
+      }));
+      playhtml.dispatchPlayEvent({ type: "xo-new-game", eventPayload: { by: mySymbol } });
+    }
+
+    function handleNewVisitor() {
+      // The first shared page-data update creates the game state.
+      pageData.onUpdate(renderGame);
+    }
+
+    async function init() {
+      els.roomTitle.textContent = roomCode;
+      els.roomCode.textContent = roomCode;
+      document.title = `XO Online · ${roomCode}`;
+
+      const initOptions = {
+        room: `${ROOM_PREFIX}${roomCode}`,
+        ...(CUSTOM_HOST ? { host: CUSTOM_HOST } : {}),
+        events: {
+          "xo-move": {
+            type: "xo-move",
+            onEvent: ({ symbol }) => {
+              if (symbol) showToast(`${symbol} vừa đánh một nước.`);
+            },
+          },
+          "xo-new-game": {
+            type: "xo-new-game",
+            onEvent: () => addLog("Một ván mới đã bắt đầu.")
+          },
+        },
+      };
+
+      try {
+        await playhtml.init(initOptions);
+        await playhtml.ready;
+        els.connectionText.textContent = "Đã kết nối";
+        document.querySelector("#connectionDot").className = "online";
+
+        if (!myName) {
+          els.nameModal.classList.remove("hidden");
+          els.nameInput.focus();
+          return;
+        }
+        enterGame();
+      } catch (error) {
+        console.error(error);
+        els.connectionText.textContent = "Lỗi kết nối";
+        els.connectionText.className = "offline";
+        showToast("Không thể kết nối playhtml.");
+      }
+    }
+
+    function enterGame() {
+      myName = els.nameInput.value.trim() || myName || `Player-${randomCode().slice(0,3)}`;
+      localStorage.setItem("xo-name", myName);
+      playhtml.users.me.name = myName;
+      els.nameModal.classList.add("hidden");
+
+      pageData = playhtml.createPageData("xo-game-state", emptyState());
+      let lastVersion = -1;
+      unsubscribeGame = pageData.onUpdate((incoming) => {
+        const state = normalizeState(incoming);
+        renderGame(state);
+        if (state.version !== lastVersion) {
+          if (state.status === "won") addLog(`${state.winner} thắng ván này.`);
+          else if (state.status === "draw") addLog("Ván đấu kết thúc với kết quả hòa.");
+          lastVersion = state.version;
+        }
+      });
+
+      unsubscribeUsers = playhtml.users.onChange(() => {
+        refreshAssignments();
+        renderPlayers();
+        const current = normalizeState(pageData.getData());
+        const count = getPlayers().length;
+        if (count >= 2 && current.status === "waiting") {
+          pageData.setData((draft) => {
+            if (draft.status === "waiting") {
+              draft.status = "playing";
+              draft.startedAt = Date.now();
+              draft.updatedAt = Date.now();
+            }
+          });
+          addLog("Đủ 2 người — bắt đầu ván.");
+        }
+        if (count < 2 && current.status === "playing") {
+          pageData.setData((draft) => {
+            draft.status = "waiting";
+            draft.winner = null;
+            draft.winningCells = [];
+            draft.turn = "X";
+            draft.updatedAt = Date.now();
+          });
+          addLog("Một người đã rời phòng — chờ người chơi mới.");
+        }
+      });
+
+      // Seed default state only when channel still has no meaningful data.
+      const current = normalizeState(pageData.getData());
+      if (!current.updatedAt) pageData.setData(emptyState());
+      refreshAssignments();
+      renderPlayers();
+      renderGame(current);
+      addLog(`Đã vào phòng ${roomCode}.`);
+    }
+
+    function goToRoom(code) {
+      const clean = sanitizeRoom(code);
+      if (!clean) return showToast("Mã phòng không hợp lệ.");
+      location.href = `${location.pathname}?room=${encodeURIComponent(clean)}`;
+    }
+
+    function copyRoom() {
+      navigator.clipboard?.writeText(`${location.origin}${location.pathname}?room=${roomCode}`)
+        .then(() => showToast("Đã sao chép link phòng."))
+        .catch(() => showToast(`Mã phòng: ${roomCode}`));
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>'"]/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;","\"":"&quot;"}[ch]));
+    }
+
+    document.querySelector("#nameBtn").addEventListener("click", enterGame);
+    els.nameInput.addEventListener("keydown", e => { if (e.key === "Enter") enterGame(); });
+    document.querySelector("#newGameBtn").addEventListener("click", startNewGame);
+    document.querySelector("#copyBtn").addEventListener("click", copyRoom);
+    document.querySelector("#leaveBtn").addEventListener("click", () => goToRoom(randomCode()));
+    document.querySelector("#joinBtn").addEventListener("click", () => goToRoom(els.joinInput.value));
+    els.joinInput.addEventListener("keydown", e => { if (e.key === "Enter") goToRoom(els.joinInput.value); });
+
+    window.addEventListener("beforeunload", () => {
+      unsubscribeGame?.();
+      unsubscribeUsers?.();
+      pageData?.destroy?.();
+    });
+
+    init();
+  </script>
+</body>
+</html>
